@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t rkelly601/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true rkelly601/react-test npm test
+
+after_success:
+  - docker build -t rkelly601/multi-client -f ./client
+  - docker build -t rkelly601/multi-nginx -f ./nginx
+  - docker build -t rkelly601/multi-server -f ./server
+  - docker build -t rkelly601/multi-worker -f ./worker
+  # Log into the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push rkelly601/multi-client
+  - docker push rkelly601/multi-nginx
+  - docker push rkelly601/multi-server
+  - docker push rkelly601/multi-worker
